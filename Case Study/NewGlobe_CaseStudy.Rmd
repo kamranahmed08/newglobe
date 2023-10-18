@@ -1,0 +1,179 @@
+---
+title: "NewGlobe Case Study - Analyst M&E/Data Analytics Teams"
+author: "Kamran Ahmed"
+date: "2023-10-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load libraries
+```{r}
+library(tidyverse)
+library(readxl)
+```
+# Load Data
+```{r}
+Lesson_completion <- read_excel("Lesson completion.xlsx")
+View(Lesson_completion)
+```
+
+```{r}
+Pupil_attendance <- read_excel("Pupil attendance.xlsx")
+View(Pupil_attendance)
+```
+
+```{r}
+Pupil_scores <- read_excel("Pupil scores.xlsx")
+View(Pupil_scores)
+```
+
+```{r}
+School_information <- read_excel("School_information.xlsx")
+View(School_information)
+```
+
+# Step 1: Data cleaning
+```{r}
+# Create a base file by reshaping the “Pupil scores” file
+Pupil_scores <- Pupil_scores %>%
+  pivot_wider(names_from = subject, values_from = score)
+```
+
+```{r}
+# Merge Pupil_attendance file to the base file i.e, Pupil_scores file
+pupil_df <- merge(Pupil_scores, Pupil_attendance, by = c("pupil_id", "school_id", "grade"))
+View(pupil_df)
+```
+
+```{r}
+# Merge teacher's data
+pupil_teacher_df <- merge(pupil_df, Lesson_completion, by = c("school_id", "grade"))
+View(pupil_teacher_df)
+```
+
+```{r}
+#merge school information
+pupil_teacher_school_df <- merge(pupil_teacher_df, School_information, by = "school_id")
+View(pupil_teacher_school_df)
+```
+
+# Step 2: Calculating KPIs
+```{r}
+network_level_average_kpi <- round(sum(pupil_teacher_school_df$present_records)/sum(pupil_teacher_school_df$attendance_records), 2)
+network_level_average_kpi
+```
+```{r}
+school_level_average_kpi <- pupil_teacher_school_df %>%
+  select(school_id, present_records, attendance_records) %>%
+  group_by(school_id) %>%
+  summarise(total_present = sum(present_records), total_records = sum(attendance_records)) %>%
+  mutate(school_kpi = round(total_present/total_records, 2)) %>%
+  summarise(round(mean(school_kpi), 2))
+school_level_average_kpi
+```
+Interpretation
+```{r}
+
+```
+
+# Step 3: Descriptives
+
+Please create a figure or a table, whichever you prefer, which shows average fluency scores for each of the five grades.
+```{r}
+pupil_teacher_school_df %>%
+  select(grade, Fluency) %>%
+  group_by(grade) %>%
+  summarise(mean(Fluency, na.rm = TRUE))
+```
+```{r}
+pupil_teacher_school_df %>%
+  select(grade, Fluency) %>%
+  group_by(grade) %>%
+  summarise(avg_fluency = mean(Fluency, na.rm = TRUE)) %>%
+  ggplot(aes(x = grade, y=avg_fluency))+
+  geom_col(fill= "dark blue")+
+  labs(title = "Average Fluency Scores for Grades",
+       x = "Grade",
+       y = "Average Fluency",
+       caption = "Based on data data from Bridge Kenya programme")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+● Which regions (using the “region” variable) have the lowest and highest average fluency score across all grades?
+```{r}
+pupil_teacher_school_df %>%
+  select(region, Fluency) %>%
+  group_by(region) %>%
+  summarise(avg_fluency = mean(Fluency, na.rm = TRUE)) %>%
+  filter(avg_fluency == max(avg_fluency, na.rm=TRUE) | avg_fluency == min(avg_fluency, na.rm=TRUE))
+```
+
+● Please create a binary variable that is 1 if a given child reads at 10 or lower, and 0 otherwise. Please create a bar chart with grades on the x-axis, and the share of pupils scoring under this threshold for each grade.
+```{r}
+pupil_teacher_school_df$not_fluent <- ifelse(pupil_teacher_school_df$Fluency <=10, 1, 0)
+
+pupil_teacher_school_df %>%
+  select(grade, not_fluent) %>%
+  group_by(grade) %>%
+  summarise(proportion_not_fluent = mean(not_fluent, na.rm = TRUE)) %>%
+  ggplot(aes(x = grade, y=proportion_not_fluent))+
+  geom_col(fill= "dark blue")+
+  labs(title = "Share of pupils scoring under Reading Fluency threshold of 10 across Grades",
+       x = "Grade",
+       y = "Proportion of Pupils below threshold",
+       caption = "Based on data data from Bridge Kenya programme")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+● What school has the highest share of pupils scoring under this threshold in grade 3?
+```{r}
+pupil_teacher_school_df %>%
+  filter(grade == "Grade 3") %>%
+  select(school_id, not_fluent) %>%
+  group_by(school_id) %>%
+  summarise(proportion_not_fluent = mean(not_fluent, na.rm = TRUE)) %>%
+  filter(proportion_not_fluent == max(proportion_not_fluent, na.rm=TRUE))
+```
+
+# Step 4: Impact evaluation 
+
+During this term, we rolled out an intensive after-school tutoring program in 55 schools. The selection to be a part of the 55 schools was randomly assigned - in other words, these schools were part of a randomized controlled trial (RCT). The “School Information” data set has a binary variable for whether each school was part of the program or not.
+
+● Our Chief Academic Officer would like to know whether this program had any effects on test scores in math, Kiswahili, fluency, and/or student attendance. Please conduct any calculations you see fit to answer his questions.
+```{r}
+summary(lm(Math ~ tutoring_program, data = pupil_teacher_school_df))
+```
+```{r}
+summary(lm(Kiswahili ~ tutoring_program, data = pupil_teacher_school_df))
+```
+```{r}
+summary(lm(Fluency ~ tutoring_program, data = pupil_teacher_school_df))
+```
+
+```{r}
+pupil_teacher_school_df$student_attendance_score <- pupil_teacher_school_df$present_records/pupil_teacher_school_df$attendance_records
+
+summary(lm(student_attendance_score ~ tutoring_program, data = pupil_teacher_school_df))
+
+```
+
+● After conducting the impact evaluation, we have heard anecdotally that teachers in schools that received tutoring felt more motivated and were completing their lessons at a faster pace. Hence, we could worry that the effects that we see are not (solely) due to the tutoring program, but also due to the higher lesson completion rate. Does this hypothesis hold up in the data?
+```{r}
+summary(lm(Math ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
+```
+```{r}
+summary(lm(Kiswahili ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
+```
+
+```{r}
+summary(lm(Fluency ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
+```
+
+```{r}
+summary(lm(student_attendance_score ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
+```
+
+
