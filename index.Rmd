@@ -9,12 +9,30 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Load libraries
+# The Data for This Case Study
+You have received four files, all in .dta and .xlsx formats, so you can use whichever format you prefer. These files are the following:
+
+● “Lesson completion”: file provided at the teacher level, meaning that there is a unique row for each teacher. The file contains the grade that each teacher teaches, and the average lesson completion rate over the term of interest.
+
+● “Pupil attendance”: file provided at the pupil level (that means that there is a unique row for each pupil). This file includes the unique school ID, unique pupil ID, the pupil’s grade, the attendance records, and the present records.
+
+○ The attendance records means the total number of times that a pupil’s teacher took attendance.
+
+○ The present records means the total number of times that a pupil was present, out of the attendance
+
+
+● “Pupil scores”: file provided at the pupil*subject level (that means that there are more than one row per pupil). This file includes the unique school ID, unique pupil ID, the pupil’s grade, the subject for this assessment, and the score obtained in this assessment.
+
+● “School information”: file provided at the school-level. It includes the region and province where each school is located, the unique school ID, and the “treatment status” (yes/no) for a given tutoring program.
+
+# Load libraries
 ```{r}
 library(tidyverse)
 library(readxl)
 ```
 # Load Data
+
+Let's load the data and have a quick look of it to see how the data look like
 ```{r}
 Lesson_completion <- read_excel("Lesson completion.xlsx")
 head(Lesson_completion)
@@ -41,7 +59,7 @@ Please create a file at the student-level which has information about their test
 
 Hint: note that the four data sets you will use are all presented at different “levels” of the data (e.g., “School information” is at the level of the school, but “Pupil scores” is at the level of the student). Therefore, we suggest that you start by reshaping the “Pupil scores” file so that each student only has one row in the data, with different columns for their scores in math, fluency, and Kiswahili. Use this as your “base file”, and start merging all the other files to this. Be careful with how you merge things: since there are many students to a school or even a teacher, some of these merges will need to be “many-to-one” (but not all).
 ```{r}
-# Create a base file by reshaping the “Pupil scores” file
+# Create a base file by reshaping the “Pupil scores” file so that each student only has one row in the data, with different columns for their scores in math, fluency, and Kiswahili
 Pupil_scores <- Pupil_scores %>%
   pivot_wider(names_from = subject, values_from = score)
 head(Pupil_scores)
@@ -64,6 +82,12 @@ head(pupil_teacher_df)
 pupil_teacher_school_df <- merge(pupil_teacher_df, School_information, by = "school_id")
 head(pupil_teacher_school_df)
 ```
+
+This is the the main data set that we will work with. Let's export this as a csv file and name it main_data
+```{r}
+write.csv(pupil_teacher_school_df, file = "main_data.csv")
+```
+
 
 # Step 2: Calculating KPIs
 
