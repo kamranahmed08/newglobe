@@ -220,15 +220,15 @@ summary(lm(student_attendance_score ~ tutoring_program, data = pupil_teacher_sch
 ● After conducting the impact evaluation, we have heard anecdotally that teachers in schools that received tutoring felt more motivated and were completing their lessons at a faster pace. Hence, we could worry that the effects that we see are not (solely) due to the tutoring program, but also due to the higher lesson completion rate. Does this hypothesis hold up in the data?
 
 ```{r}
-# If teachers in schools that received tutoring indeed felt more motivated and were completing their lessons at a faster pace then tutoring program also has an effect on teachers completion rate. In this case teacher's lesson completion rate is a confounding variable that also effects the outcome variable and is being effected by the treatment variable (tutoring program). If this is true, omitting teachers lesson completion rate from the regressions would make the results bias as the effects of teachers higher lesson completion rate would also be wrongly attributed to the tutoring program. Let's first run a regression of teachers lesson completion rate on tutoring program to see if there is any effect of tutoring program on lesson competion rate. Then, we will modify the above regressions by controlling for the effects of lesson completion rate by introducing the lesson_completion_rate to the regression along with the tutoring program.
+# If teachers in schools that received tutoring indeed felt more motivated and were completing their lessons at a faster pace then tutoring program also has an effect on teachers completion rate. In that case teacher's lesson completion rate would be a confounding variable that also effects the outcome variable and is being effected by the treatment variable (tutoring program). If this is true, omitting teachers lesson completion rate from the regressions would make the results biased as the effects of teachers' higher lesson completion rate would also be wrongly attributed to the tutoring program.
+#Let's first run a diagnostic regression regression of teachers lesson completion rate on tutoring program to see if there is any effect of tutoring program on lesson completion rate. Then, we will modify the above regressions by controlling for the effects of lesson completion rate by including this variable in our regression analysis as a covariate.
 ```
 
 ```{r}
 summary(lm(lesson_completion_rate ~ tutoring_program, data = pupil_teacher_school_df))
 ```
 ```{r}
-# In the above regression results, we see that tutoring program does not have a statistically significant effect on lesson completion rate. Therefore, we do not need to worry that the effects that we see are not (solely) due to the tutoring program, but also due to the higher lesson completion rate.
-# Below, we control for lesson_completion_rate to see if te results of regression vary from the above ones
+# In the above regression results, we see that tutoring program does not have a statistically significant effect on lesson completion rate. This suggests that it is not a significant confounder. However, it might be confounding in combination with the tutoring program variable so we should still use it as a control variable. Below, we control for lesson_completion_rate to see if the results of regression vary from the above ones.
 ```
 
 
@@ -245,6 +245,10 @@ summary(lm(Fluency ~ tutoring_program+lesson_completion_rate, data = pupil_teach
 
 ```{r}
 summary(lm(student_attendance_score ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
+```
+```{r}
+# By including lesson completion rate variable in our regression analysis as a covariate, we saw that the coefficients for tutoring program in all of the four regressions remained almost the same as before and were not effected much. Although we do see a statistically significant effect of lesson completion rate on students performance and attendance, this variable is independently assocaited with the outcome variables and does not mediate the effects of the tutoring program.
+# The hypothesis that the effects that we saw are not (solely) due to the tutoring program, but also due to the higher lesson completion rate does not hold up in the data.
 ```
 
 
