@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# The Data for This Case Study
+# The Data
 You have received four files, all in .dta and .xlsx formats, so you can use whichever format you prefer. These files are the following:
 
 ● “Lesson completion”: file provided at the teacher level, meaning that there is a unique row for each teacher. The file contains the grade that each teacher teaches, and the average lesson completion rate over the term of interest.
@@ -83,9 +83,9 @@ pupil_teacher_school_df <- merge(pupil_teacher_df, School_information, by = "sch
 head(pupil_teacher_school_df)
 ```
 
-This is the the main data set that we will work with. Let's export this as a csv file and name it main_data
+This is the the main data set that we will work with. Let's export this as a csv file and name it "main_data"
 ```{r}
-write.csv(pupil_teacher_school_df, file = "main_data.csv")
+write.csv(pupil_teacher_school_df, file = "main_data.csv", row.names = FALSE)
 ```
 
 
@@ -95,12 +95,14 @@ One of our main KPIs within the Schools Vertical is “Percent Pupils Present”
 
 ● The first task is to translate this KPI into the data. We will calculate this KPI in two different ways. First, calculate this KPI for all pupils at once. What is the network-level average Percent Pupils Present (use two decimal points)?
 ```{r}
+# Network-Level Average Percent Pupils Present (All Pupils)
 network_level_average_kpi <- round(sum(pupil_teacher_school_df$present_records)/sum(pupil_teacher_school_df$attendance_records), 2)
 network_level_average_kpi
 ```
 
 ● Now, please calculate this percentage for each school, and create an average at the school-level. What is the average Percent Pupils Present now (use two decimal points)?
 ```{r}
+# School-Level Average Percent Pupils Present
 school_level_average_kpi <- pupil_teacher_school_df %>%
   select(school_id, present_records, attendance_records) %>%
   group_by(school_id) %>%
@@ -112,7 +114,7 @@ school_level_average_kpi
 
 ● How does the interpretation of the KPI change between the two approaches? Does it matter in this case? When would it matter, (i.e., when would one be more appropriate than the other?) 2-4 sentences max.
 ```{r}
-
+# The way we interpret the KPI shifts with these two approaches due to their scope. When we calculate the network-level average, we're looking at the big picture, assessing how well the entire network (Bridge Kenya programme) is performing by considering all pupils across all schools. On the other hand, the school-level average narrows our focus to individual school performance, helping us pinpoint differences between schools. In this case it doesn't matter much because we get the same values for the KPIs through both approaches when rounded to two decimal places. However, it would matter when there is more heterogeneity across schools in terms of attendance rate and number of pupils. If there is more variation in attendance rate across schools and number of pupils, merely calculating percentage for each school and creating a simple average at the school-level would give the same weightage to each scool regardless of the number of pupils in that school, hence the value will deviate from the network-level average. The choice between these approaches hinges on the specific analysis or decision-making context. The network-level approach would one be more appropriate when we want to gauge the overall network performance, whereas the school-level approach is valuable for recognizing variations and addressing specific issues within each school. Ultimately, the choice depends on the specific objectives of the analysis or decision-making process.
 ```
 
 # Step 3: Descriptives
@@ -133,7 +135,7 @@ pupil_teacher_school_df %>%
   summarise(avg_fluency = mean(Fluency, na.rm = TRUE)) %>%
   ggplot(aes(x = grade, y=avg_fluency))+
   geom_col(fill= "dark blue")+
-  labs(title = "Average Fluency Scores for Grades",
+  labs(title = "Average Fluency Scores Across Grades",
        x = "Grade",
        y = "Average Fluency",
        caption = "Based on data data from Bridge Kenya programme")+
@@ -148,6 +150,8 @@ pupil_teacher_school_df %>%
   summarise(avg_fluency = mean(Fluency, na.rm = TRUE)) %>%
   filter(avg_fluency == max(avg_fluency, na.rm=TRUE) | avg_fluency == min(avg_fluency, na.rm=TRUE))
 ```
+Kirinyaga has the lowest average fluency score across all grades.
+Machakos has the highest average fluency score across all grades.
 
 ● Please create a binary variable that is 1 if a given child reads at 10 or lower, and 0 otherwise. Please create a bar chart with grades on the x-axis, and the share of pupils scoring under this threshold for each grade.
 ```{r}
@@ -157,11 +161,11 @@ pupil_teacher_school_df %>%
   select(grade, not_fluent) %>%
   group_by(grade) %>%
   summarise(proportion_not_fluent = mean(not_fluent, na.rm = TRUE)) %>%
-  ggplot(aes(x = grade, y=proportion_not_fluent))+
+  ggplot(aes(x = grade, y=proportion_not_fluent*100))+
   geom_col(fill= "dark blue")+
   labs(title = "Share of pupils scoring under Reading Fluency threshold of 10 across Grades",
        x = "Grade",
-       y = "Proportion of Pupils below threshold",
+       y = "% of Pupils below threshold",
        caption = "Based on data data from Bridge Kenya programme")+
   theme(plot.title = element_text(hjust = 0.5))
 ```
@@ -175,12 +179,26 @@ pupil_teacher_school_df %>%
   summarise(proportion_not_fluent = mean(not_fluent, na.rm = TRUE)) %>%
   filter(proportion_not_fluent == max(proportion_not_fluent, na.rm=TRUE))
 ```
+school_id 223941 is the one that has the highest share of pupils scoring under this threshold in grade 3.
 
 # Step 4: Impact evaluation 
 
 During this term, we rolled out an intensive after-school tutoring program in 55 schools. The selection to be a part of the 55 schools was randomly assigned - in other words, these schools were part of a randomized controlled trial (RCT). The “School Information” data set has a binary variable for whether each school was part of the program or not.
 
 ● Our Chief Academic Officer would like to know whether this program had any effects on test scores in math, Kiswahili, fluency, and/or student attendance. Please conduct any calculations you see fit to answer his questions.
+
+Let's do the following calculations to transform the columns first and prepare the data for regression analysis.
+```{r}
+# Create a column for attendance performance at the student level
+pupil_teacher_school_df$student_attendance_score <- 100*(pupil_teacher_school_df$present_records/pupil_teacher_school_df$attendance_records)
+
+# The column for Math, Kiswahili and lesson completion rate currently have values between 0 and 1. Let's multiple them by 100 to show them in percentage form 
+
+pupil_teacher_school_df$Math <- pupil_teacher_school_df$Math*100
+pupil_teacher_school_df$Kiswahili <- pupil_teacher_school_df$Kiswahili*100
+pupil_teacher_school_df$lesson_completion_rate <- pupil_teacher_school_df$lesson_completion_rate*100
+```
+
 ```{r}
 summary(lm(Math ~ tutoring_program, data = pupil_teacher_school_df))
 ```
@@ -192,13 +210,28 @@ summary(lm(Fluency ~ tutoring_program, data = pupil_teacher_school_df))
 ```
 
 ```{r}
-pupil_teacher_school_df$student_attendance_score <- pupil_teacher_school_df$present_records/pupil_teacher_school_df$attendance_records
-
 summary(lm(student_attendance_score ~ tutoring_program, data = pupil_teacher_school_df))
-
+```
+```{r}
+# By running simple linear regression with Math, Kiswahili, Fluency, and Attendance score as the dependent variable and tutoring program as the independent variable we saw that tutoring program has a statistically significant positive effect on students' test scores in Math, Kiswahili, Fluency, and attendance on average. The results are highly statistically significant even at a significance level as low as 0.001.
 ```
 
+
 ● After conducting the impact evaluation, we have heard anecdotally that teachers in schools that received tutoring felt more motivated and were completing their lessons at a faster pace. Hence, we could worry that the effects that we see are not (solely) due to the tutoring program, but also due to the higher lesson completion rate. Does this hypothesis hold up in the data?
+
+```{r}
+# If teachers in schools that received tutoring indeed felt more motivated and were completing their lessons at a faster pace then tutoring program also has an effect on teachers completion rate. In this case teacher's lesson completion rate is a confounding variable that also effects the outcome variable and is being effected by the treatment variable (tutoring program). If this is true, omitting teachers lesson completion rate from the regressions would make the results bias as the effects of teachers higher lesson completion rate would also be wrongly attributed to the tutoring program. Let's first run a regression of teachers lesson completion rate on tutoring program to see if there is any effect of tutoring program on lesson competion rate. Then, we will modify the above regressions by controlling for the effects of lesson completion rate by introducing the lesson_completion_rate to the regression along with the tutoring program.
+```
+
+```{r}
+summary(lm(lesson_completion_rate ~ tutoring_program, data = pupil_teacher_school_df))
+```
+```{r}
+# In the above regression results, we see that tutoring program does not have a statistically significant effect on lesson completion rate. Therefore, we do not need to worry that the effects that we see are not (solely) due to the tutoring program, but also due to the higher lesson completion rate.
+# Below, we control for lesson_completion_rate to see if te results of regression vary from the above ones
+```
+
+
 ```{r}
 summary(lm(Math ~ tutoring_program+lesson_completion_rate, data = pupil_teacher_school_df))
 ```
