@@ -672,7 +672,7 @@ and prepare the data for regression analysis.</p>
 <pre class="r"><code># Create a column for attendance performance at the student level
 pupil_teacher_school_df$student_attendance_score &lt;- 100*(pupil_teacher_school_df$present_records/pupil_teacher_school_df$attendance_records)
 
-# The column for Math, Kiswahili and lesson completion rate currently have values between 0 and 1. Let&#39;s multiple them by 100 to show them in percentage form 
+# The column for Math, Kiswahili and lesson completion rate currently have values between 0 and 1. Let&#39;s multiply them by 100 to show them in percentage form 
 
 pupil_teacher_school_df$Math &lt;- pupil_teacher_school_df$Math*100
 pupil_teacher_school_df$Kiswahili &lt;- pupil_teacher_school_df$Kiswahili*100

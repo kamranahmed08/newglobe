@@ -192,7 +192,7 @@ Let's do the following calculations to transform the columns first and prepare t
 # Create a column for attendance performance at the student level
 pupil_teacher_school_df$student_attendance_score <- 100*(pupil_teacher_school_df$present_records/pupil_teacher_school_df$attendance_records)
 
-# The column for Math, Kiswahili and lesson completion rate currently have values between 0 and 1. Let's multiple them by 100 to show them in percentage form 
+# The column for Math, Kiswahili and lesson completion rate currently have values between 0 and 1. Let's multiply them by 100 to show them in percentage form 
 
 pupil_teacher_school_df$Math <- pupil_teacher_school_df$Math*100
 pupil_teacher_school_df$Kiswahili <- pupil_teacher_school_df$Kiswahili*100
