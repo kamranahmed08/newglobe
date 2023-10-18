@@ -17,54 +17,65 @@ library(readxl)
 # Load Data
 ```{r}
 Lesson_completion <- read_excel("Lesson completion.xlsx")
-View(Lesson_completion)
+head(Lesson_completion)
 ```
 
 ```{r}
 Pupil_attendance <- read_excel("Pupil attendance.xlsx")
-View(Pupil_attendance)
+head(Pupil_attendance)
 ```
 
 ```{r}
 Pupil_scores <- read_excel("Pupil scores.xlsx")
-View(Pupil_scores)
+head(Pupil_scores)
 ```
 
 ```{r}
 School_information <- read_excel("School_information.xlsx")
-View(School_information)
+head(School_information)
 ```
 
 # Step 1: Data cleaning
+
+Please create a file at the student-level which has information about their test scores, school information, their attendance, and their teacher’s lesson completion rate. Note that this is the main data set that we expect you to share with us.
+
+Hint: note that the four data sets you will use are all presented at different “levels” of the data (e.g., “School information” is at the level of the school, but “Pupil scores” is at the level of the student). Therefore, we suggest that you start by reshaping the “Pupil scores” file so that each student only has one row in the data, with different columns for their scores in math, fluency, and Kiswahili. Use this as your “base file”, and start merging all the other files to this. Be careful with how you merge things: since there are many students to a school or even a teacher, some of these merges will need to be “many-to-one” (but not all).
 ```{r}
 # Create a base file by reshaping the “Pupil scores” file
 Pupil_scores <- Pupil_scores %>%
   pivot_wider(names_from = subject, values_from = score)
+head(Pupil_scores)
 ```
 
 ```{r}
 # Merge Pupil_attendance file to the base file i.e, Pupil_scores file
 pupil_df <- merge(Pupil_scores, Pupil_attendance, by = c("pupil_id", "school_id", "grade"))
-View(pupil_df)
+head(pupil_df)
 ```
 
 ```{r}
 # Merge teacher's data
 pupil_teacher_df <- merge(pupil_df, Lesson_completion, by = c("school_id", "grade"))
-View(pupil_teacher_df)
+head(pupil_teacher_df)
 ```
 
 ```{r}
 #merge school information
 pupil_teacher_school_df <- merge(pupil_teacher_df, School_information, by = "school_id")
-View(pupil_teacher_school_df)
+head(pupil_teacher_school_df)
 ```
 
 # Step 2: Calculating KPIs
+
+One of our main KPIs within the Schools Vertical is “Percent Pupils Present”. The “layman’s definition” of this KPI is “The percentage of pupils who were present, out of all pupils - across all days in the term to date ”. In other words, the percentage of pupils who were present (for each pupil in the “Pupil attendance” file, this is displayed in the “present_records” variable), out of pupils who had attendance records (the “attendance_records” variable in the same file).
+
+● The first task is to translate this KPI into the data. We will calculate this KPI in two different ways. First, calculate this KPI for all pupils at once. What is the network-level average Percent Pupils Present (use two decimal points)?
 ```{r}
 network_level_average_kpi <- round(sum(pupil_teacher_school_df$present_records)/sum(pupil_teacher_school_df$attendance_records), 2)
 network_level_average_kpi
 ```
+
+● Now, please calculate this percentage for each school, and create an average at the school-level. What is the average Percent Pupils Present now (use two decimal points)?
 ```{r}
 school_level_average_kpi <- pupil_teacher_school_df %>%
   select(school_id, present_records, attendance_records) %>%
@@ -74,12 +85,15 @@ school_level_average_kpi <- pupil_teacher_school_df %>%
   summarise(round(mean(school_kpi), 2))
 school_level_average_kpi
 ```
-Interpretation
+
+● How does the interpretation of the KPI change between the two approaches? Does it matter in this case? When would it matter, (i.e., when would one be more appropriate than the other?) 2-4 sentences max.
 ```{r}
 
 ```
 
 # Step 3: Descriptives
+
+Let’s dig into the reading fluency scores in your current data set. These came from the “Pupil scores” data, but you will need the data set you created in Step 1 above to answer these questions. Please answer the following questions as succinctly as possible.
 
 Please create a figure or a table, whichever you prefer, which shows average fluency scores for each of the five grades.
 ```{r}

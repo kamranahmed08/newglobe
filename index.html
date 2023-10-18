@@ -374,34 +374,157 @@ Analytics Teams</h1>
 <div id="load-data" class="section level1">
 <h1>Load Data</h1>
 <pre class="r"><code>Lesson_completion &lt;- read_excel(&quot;Lesson completion.xlsx&quot;)
-View(Lesson_completion)</code></pre>
+head(Lesson_completion)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   school_id teacher_id grade   lesson_completion_rate
+##       &lt;dbl&gt;      &lt;dbl&gt; &lt;chr&gt;                    &lt;dbl&gt;
+## 1       416        505 Grade 1                  0.568
+## 2       416        202 Grade 2                  0.681
+## 3       416        124 Grade 3                  0.250
+## 4       416        516 Grade 4                  0.359
+## 5       416        145 Grade 5                  0.397
+## 6       792        545 Grade 1                  0.809</code></pre>
 <pre class="r"><code>Pupil_attendance &lt;- read_excel(&quot;Pupil attendance.xlsx&quot;)
-View(Pupil_attendance)</code></pre>
+head(Pupil_attendance)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   school_id pupil_id grade   attendance_records present_records
+##       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;                &lt;dbl&gt;           &lt;dbl&gt;
+## 1     35175        1 Grade 1                 91              69
+## 2     40580        7 Grade 2                 92              86
+## 3      9342        8 Grade 5                 43              39
+## 4    858450       10 Grade 5                 86              62
+## 5       792       13 Grade 3                104              81
+## 6    324884       14 Grade 4                 90              67</code></pre>
 <pre class="r"><code>Pupil_scores &lt;- read_excel(&quot;Pupil scores.xlsx&quot;)
-View(Pupil_scores)</code></pre>
+head(Pupil_scores)</code></pre>
+<pre><code>## # A tibble: 6 × 5
+##   school_id pupil_id grade   subject     score
+##       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;   &lt;chr&gt;       &lt;dbl&gt;
+## 1     35175        1 Grade 1 Fluency    65    
+## 2     35175        1 Grade 1 Kiswahili   0.943
+## 3     35175        1 Grade 1 Math        1    
+## 4     40580        7 Grade 2 Math        0.933
+## 5     40580        7 Grade 2 Kiswahili   0.943
+## 6     40580        7 Grade 2 Fluency   117</code></pre>
 <pre class="r"><code>School_information &lt;- read_excel(&quot;School_information.xlsx&quot;)
-View(School_information)</code></pre>
+head(School_information)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   region  province school_id tutoring_program
+##   &lt;chr&gt;   &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;           
+## 1 Mombasa Coast       136992 No              
+## 2 Kilifi  Coast       687400 Yes             
+## 3 Mombasa Coast       609982 Yes             
+## 4 Eastern Eastern     223941 No              
+## 5 Isiolo  Eastern      34092 No              
+## 6 Isiolo  Eastern      46684 No</code></pre>
 </div>
 <div id="step-1-data-cleaning" class="section level1">
 <h1>Step 1: Data cleaning</h1>
+<p>Please create a file at the student-level which has information about
+their test scores, school information, their attendance, and their
+teacher’s lesson completion rate. Note that this is the main data set
+that we expect you to share with us.</p>
+<p>Hint: note that the four data sets you will use are all presented at
+different “levels” of the data (e.g., “School information” is at the
+level of the school, but “Pupil scores” is at the level of the student).
+Therefore, we suggest that you start by reshaping the “Pupil scores”
+file so that each student only has one row in the data, with different
+columns for their scores in math, fluency, and Kiswahili. Use this as
+your “base file”, and start merging all the other files to this. Be
+careful with how you merge things: since there are many students to a
+school or even a teacher, some of these merges will need to be
+“many-to-one” (but not all).</p>
 <pre class="r"><code># Create a base file by reshaping the “Pupil scores” file
 Pupil_scores &lt;- Pupil_scores %&gt;%
-  pivot_wider(names_from = subject, values_from = score)</code></pre>
+  pivot_wider(names_from = subject, values_from = score)
+head(Pupil_scores)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   school_id pupil_id grade   Fluency Kiswahili  Math
+##       &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;dbl&gt;
+## 1     35175        1 Grade 1      65     0.943 1    
+## 2     40580        7 Grade 2     117     0.943 0.933
+## 3      9342        8 Grade 5     144     0.850 0.700
+## 4    858450       10 Grade 5     211     1     0.720
+## 5       792       13 Grade 3     221     0.857 0.967
+## 6    324884       14 Grade 4     267     0.921 0.900</code></pre>
 <pre class="r"><code># Merge Pupil_attendance file to the base file i.e, Pupil_scores file
 pupil_df &lt;- merge(Pupil_scores, Pupil_attendance, by = c(&quot;pupil_id&quot;, &quot;school_id&quot;, &quot;grade&quot;))
-View(pupil_df)</code></pre>
+head(pupil_df)</code></pre>
+<pre><code>##   pupil_id school_id   grade Fluency Kiswahili      Math attendance_records
+## 1        1     35175 Grade 1      65 0.9428571 1.0000000                 91
+## 2       10    858450 Grade 5     211 1.0000000 0.7200000                 86
+## 3      100     32940 Grade 2     170 0.7142857 0.7333333                 61
+## 4    10000     49404 Grade 1       7 0.6285715 0.7000000                 93
+## 5    10002    223941 Grade 1       0 0.6571429 0.8333333                 92
+## 6    10005    822894 Grade 2     137 0.7739512 0.6362270                 92
+##   present_records
+## 1              69
+## 2              62
+## 3              49
+## 4              46
+## 5              44
+## 6              80</code></pre>
 <pre class="r"><code># Merge teacher&#39;s data
 pupil_teacher_df &lt;- merge(pupil_df, Lesson_completion, by = c(&quot;school_id&quot;, &quot;grade&quot;))
-View(pupil_teacher_df)</code></pre>
+head(pupil_teacher_df)</code></pre>
+<pre><code>##   school_id   grade pupil_id Fluency Kiswahili Math attendance_records
+## 1    108210 Grade 1     6430      41 0.4000000  0.9                 89
+## 2    108210 Grade 1    10987      32 0.5428572  1.0                 83
+## 3    108210 Grade 1    22350      NA 0.1428571  1.0                 85
+## 4    108210 Grade 1     5572      41 0.7428572  1.0                 89
+## 5    108210 Grade 1    21191      12 0.4000000  0.9                 89
+## 6    108210 Grade 1    10184      33 0.8857143  1.0                 57
+##   present_records teacher_id lesson_completion_rate
+## 1              72        323              0.3953488
+## 2              74        323              0.3953488
+## 3              26        323              0.3953488
+## 4              87        323              0.3953488
+## 5              59        323              0.3953488
+## 6              55        323              0.3953488</code></pre>
 <pre class="r"><code>#merge school information
 pupil_teacher_school_df &lt;- merge(pupil_teacher_df, School_information, by = &quot;school_id&quot;)
-View(pupil_teacher_school_df)</code></pre>
+head(pupil_teacher_school_df)</code></pre>
+<pre><code>##   school_id   grade pupil_id Fluency Kiswahili      Math attendance_records
+## 1       416 Grade 1    23222      43 0.6571429 0.9666666                 85
+## 2       416 Grade 1     8377      11 0.1428571 0.8666667                 85
+## 3       416 Grade 1    11313      26 0.1428571 0.7666667                 85
+## 4       416 Grade 1     5052      38 0.5428572 1.0000000                 85
+## 5       416 Grade 1     6151      21 0.1428571 0.7666667                 85
+## 6       416 Grade 1     2097      10 0.2000000 0.6666667                 85
+##   present_records teacher_id lesson_completion_rate    region province
+## 1              76        505              0.5684008 Kirinyaga  Central
+## 2              69        505              0.5684008 Kirinyaga  Central
+## 3              64        505              0.5684008 Kirinyaga  Central
+## 4              77        505              0.5684008 Kirinyaga  Central
+## 5              59        505              0.5684008 Kirinyaga  Central
+## 6              62        505              0.5684008 Kirinyaga  Central
+##   tutoring_program
+## 1               No
+## 2               No
+## 3               No
+## 4               No
+## 5               No
+## 6               No</code></pre>
 </div>
 <div id="step-2-calculating-kpis" class="section level1">
 <h1>Step 2: Calculating KPIs</h1>
+<p>One of our main KPIs within the Schools Vertical is “Percent Pupils
+Present”. The “layman’s definition” of this KPI is “The percentage of
+pupils who were present, out of all pupils - across all days in the term
+to date”. In other words, the percentage of pupils who were present (for
+each pupil in the “Pupil attendance” file, this is displayed in the
+“present_records” variable), out of pupils who had attendance records
+(the “attendance_records” variable in the same file).</p>
+<p>● The first task is to translate this KPI into the data. We will
+calculate this KPI in two different ways. First, calculate this KPI for
+all pupils at once. What is the network-level average Percent Pupils
+Present (use two decimal points)?</p>
 <pre class="r"><code>network_level_average_kpi &lt;- round(sum(pupil_teacher_school_df$present_records)/sum(pupil_teacher_school_df$attendance_records), 2)
 network_level_average_kpi</code></pre>
 <pre><code>## [1] 0.76</code></pre>
+<p>● Now, please calculate this percentage for each school, and create
+an average at the school-level. What is the average Percent Pupils
+Present now (use two decimal points)?</p>
 <pre class="r"><code>school_level_average_kpi &lt;- pupil_teacher_school_df %&gt;%
   select(school_id, present_records, attendance_records) %&gt;%
   group_by(school_id) %&gt;%
@@ -413,7 +536,10 @@ school_level_average_kpi</code></pre>
 ##   `round(mean(school_kpi), 2)`
 ##                          &lt;dbl&gt;
 ## 1                         0.76</code></pre>
-<p>Interpretation</p>
+<p>● How does the interpretation of the KPI change between the two
+approaches? Does it matter in this case? When would it matter, (i.e.,
+when would one be more appropriate than the other?) 2-4 sentences
+max.</p>
 </div>
 <div id="step-3-descriptives" class="section level1">
 <h1>Step 3: Descriptives</h1>
